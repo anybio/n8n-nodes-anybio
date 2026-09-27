@@ -158,7 +158,7 @@
 		{
 			"parameters": {
 				"promptType": "define",
-				"text": "=You are drafting one SMS for a remote blood pressure monitoring program. The patient's latest reading was {{ $('Reading In').item.json.body.reading.systolic }}/{{ $('Reading In').item.json.body.reading.diastolic }} mmHg. Ask how they are feeling and whether they have a headache, chest pain, shortness of breath or vision changes, and tell them their care team will see their answer. Do not give medication or dosing instructions. Plain text, under 300 characters."
+				"text": "=You are drafting one SMS for a remote blood pressure monitoring program. The patient's latest reading was {{ $('Reading In').item.json.body.reading.systolic }}/{{ $('Reading In').item.json.body.reading.diastolic }} mmHg. Ask how they are feeling and whether they have noticed any symptoms, and tell them their care team will see their answer. Do not give medication or dosing instructions. Plain text, under 300 characters."
 			},
 			"id": "4b0c1a2e-0012-4c8e-9a51-5d7f3e2a1012",
 			"name": "Draft Follow-up",
