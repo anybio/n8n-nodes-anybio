@@ -90,7 +90,7 @@
 						{
 							"id": "4b0c1a2e-0101-4c8e-9a51-5d7f3e2a1101",
 							"name": "holdMessage",
-							"value": "Thanks for your reading. A nurse from your care team will reply within one business day. If you have chest pain or trouble breathing, call 911 now.",
+							"value": "Thanks for your message. Someone from your care team will follow up. If this is an emergency, call 911 or your local emergency number.",
 							"type": "string"
 						},
 						{
