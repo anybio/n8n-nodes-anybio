@@ -1,0 +1,70 @@
+# Dependencies and build output
+node_modules/
+dist/
+build/
+coverage/
+.nyc_output/
+*.tgz
+*.tsbuildinfo
+.turbo/
+.cache/
+.eslintcache
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+.npmrc
+
+# Editors and IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.history/
+
+# Operating systems
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# AI coding assistants: local config, memory and instruction files
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+.cursor/
+.cursorrules
+.cursorignore
+.windsurf/
+.windsurfrules
+.aider*
+.continue/
+.codex/
+.codeium/
+.tabnine/
+.roo/
+.clinerules
+.kiro/
+.gemini/
+GEMINI.md
+AGENTS.md
+.github/copilot-instructions.md
+.github/instructions/
+.junie/
+.augment/
+.sourcegraph/
+.zed/
+
+# n8n local runs
+.n8n/

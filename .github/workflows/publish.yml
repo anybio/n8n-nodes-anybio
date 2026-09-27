@@ -1,0 +1,68 @@
+# Publish n8n-nodes-anybio to npm with a provenance statement.
+#
+# Runs only when a version tag (v1.2.3) is pushed, and waits for approval on
+# the npm-publish environment before anything is published.
+
+name: Publish
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    environment: npm-publish
+    permissions:
+      contents: read
+      # Mints the OIDC token npm uses to sign the provenance statement (and,
+      # with Trusted Publishing, to authenticate).
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      - name: npm with Trusted Publishing support
+        run: npm install -g npm@^11.5.1
+
+      - name: The tag matches package.json
+        run: |
+          version="v$(node -p "require('./package.json').version")"
+          if [ "$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $version"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+      - name: Publish with provenance
+        # RELEASE_MODE lets `n8n-node prerelease` (the prepublishOnly guard)
+        # allow this publish. NPM_TOKEN is used only when set; with Trusted
+        # Publishing it is left unset and npm authenticates over OIDC.
+        env:
+          RELEASE_MODE: 'true'
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --access public

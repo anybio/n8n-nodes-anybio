@@ -1,0 +1,318 @@
+{
+	"id": "anybioTplSymp001",
+	"name": "Governed symptom follow-up on a reading",
+	"nodes": [
+		{
+			"parameters": {
+				"content": "## Governed symptom follow-up on a reading\n\nA reading arrives, an LLM drafts a symptom check-in, and **AnyBio Govern** evaluates the draft under your Govern policy before anything reaches the patient.\n\n- **Deliver**: the draft was allowed; the SMS node sends it.\n- **Show Hold Text**: the draft was stopped and a holding line is owed; the SMS node sends your holding line, never the draft.\n- **Send Nothing**: the draft was stopped and nothing is owed (an opt-out, a missing consent, the cap), or AnyBio could not be reached. Nothing goes to the patient.\n\nEvery branch reports the outcome, so the record reads proposed, decided, delivered.\n\n**Synthetic data only.** Use a sandbox application key; the pinned test payload uses fictional 555-01xx numbers.",
+				"height": 520,
+				"width": 460
+			},
+			"id": "4b0c1a2e-0001-4c8e-9a51-5d7f3e2a1001",
+			"name": "About this template",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [
+				-460,
+				-120
+			]
+		},
+		{
+			"parameters": {
+				"content": "### 1. The reading comes in\n\nPOST a JSON body shaped like the pinned test data:\n\n```json\n{\n  \"conversationId\": \"synthetic-conv-001\",\n  \"readingId\": \"synthetic-reading-001\",\n  \"patientRef\": \"synthetic-patient-001\",\n  \"phone\": \"+15550100042\",\n  \"reading\": { \"systolic\": 162, \"diastolic\": 98 }\n}\n```\n\n`readingId` becomes the AnyBio Govern node's turn ID, so a re-delivered reading replays the stored decision instead of drafting a second message.",
+				"height": 440,
+				"width": 380
+			},
+			"id": "4b0c1a2e-0002-4c8e-9a51-5d7f3e2a1002",
+			"name": "Note: the reading",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [
+				40,
+				-380
+			]
+		},
+		{
+			"parameters": {
+				"content": "### 2. Disclosure, then the draft\n\nEvery patient-audience turn needs the AI-identity disclosure on record for the conversation, or Govern holds it. This template assumes the program's enrollment message showed the disclosure below and records it (once per conversation; a repeat returns the same evidence).\n\nSwap the chat model for your own. The prompt never gives medication instructions, and Govern enforces that anyway.",
+				"height": 300,
+				"width": 420
+			},
+			"id": "4b0c1a2e-0003-4c8e-9a51-5d7f3e2a1003",
+			"name": "Note: disclosure and draft",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [
+				460,
+				-380
+			]
+		},
+		{
+			"parameters": {
+				"content": "### 3. Only Deliver and Show Hold Text reach the SMS node\n\nSMS is outbound, so a hold shows text only when AnyBio says a holding line is owed, and at most once per decision. **Send Nothing** is connected only to the outcome report: never connect anything that messages the patient to it.\n\nThe Hold Message on AnyBio Govern is your holding line: fixed text your clinical owner wrote in advance, never model-written.",
+				"height": 300,
+				"width": 440
+			},
+			"id": "4b0c1a2e-0004-4c8e-9a51-5d7f3e2a1004",
+			"name": "Note: branches",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [
+				1160,
+				-380
+			]
+		},
+		{
+			"parameters": {
+				"httpMethod": "POST",
+				"path": "anybio-reading",
+				"responseMode": "onReceived",
+				"options": {}
+			},
+			"id": "4b0c1a2e-0010-4c8e-9a51-5d7f3e2a1010",
+			"name": "Reading In",
+			"type": "n8n-nodes-base.webhook",
+			"typeVersion": 2,
+			"position": [
+				100,
+				120
+			],
+			"webhookId": "8d3f5a60-2b1c-4e7d-9f0a-6c5b4a3d2e10"
+		},
+		{
+			"parameters": {
+				"operation": "recordDisclosure",
+				"conversationId": "={{ $json.body.conversationId }}",
+				"channel": "sms",
+				"textShown": "Synthetic Heart Program: messages in this conversation are written by an automated assistant. Your care team reviews anything it is unsure about. Reply STOP to opt out.",
+				"disclosureFields": {},
+				"requestOptions": {}
+			},
+			"id": "4b0c1a2e-0011-4c8e-9a51-5d7f3e2a1011",
+			"name": "Record Disclosure",
+			"type": "n8n-nodes-anybio.anyBioGovern",
+			"typeVersion": 1,
+			"position": [
+				340,
+				120
+			]
+		},
+		{
+			"parameters": {
+				"promptType": "define",
+				"text": "=You are drafting one SMS for a remote blood pressure monitoring program. The patient's latest reading was {{ $('Reading In').item.json.body.reading.systolic }}/{{ $('Reading In').item.json.body.reading.diastolic }} mmHg. Ask how they are feeling and whether they have a headache, chest pain, shortness of breath or vision changes, and tell them their care team will see their answer. Do not give medication or dosing instructions. Plain text, under 300 characters."
+			},
+			"id": "4b0c1a2e-0012-4c8e-9a51-5d7f3e2a1012",
+			"name": "Draft Follow-up",
+			"type": "@n8n/n8n-nodes-langchain.chainLlm",
+			"typeVersion": 1.5,
+			"position": [
+				580,
+				120
+			]
+		},
+		{
+			"parameters": {
+				"model": "gpt-4o-mini",
+				"options": {}
+			},
+			"id": "4b0c1a2e-0013-4c8e-9a51-5d7f3e2a1013",
+			"name": "Chat Model",
+			"type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+			"typeVersion": 1,
+			"position": [
+				600,
+				340
+			]
+		},
+		{
+			"parameters": {
+				"operation": "evaluate",
+				"draftText": "={{ $json.text }}",
+				"conversationId": "={{ $('Reading In').item.json.body.conversationId }}",
+				"channel": "sms",
+				"audience": "patient",
+				"patientRef": "={{ $('Reading In').item.json.body.patientRef }}",
+				"holdMessage": "Thanks for your reading. A nurse from the Synthetic Heart Program will text you back within 2 hours. If you have chest pain or trouble breathing, call 911 now.",
+				"additionalFields": {
+					"turnId": "={{ $('Reading In').item.json.body.readingId }}",
+					"model": "gpt-4o-mini"
+				},
+				"requestOptions": {}
+			},
+			"id": "4b0c1a2e-0014-4c8e-9a51-5d7f3e2a1014",
+			"name": "AnyBio Govern",
+			"type": "n8n-nodes-anybio.anyBioGovern",
+			"typeVersion": 1,
+			"position": [
+				900,
+				120
+			]
+		},
+		{
+			"parameters": {
+				"from": "+15550100001",
+				"to": "={{ $('Reading In').item.json.body.phone }}",
+				"message": "={{ $json.text }}",
+				"options": {}
+			},
+			"id": "4b0c1a2e-0015-4c8e-9a51-5d7f3e2a1015",
+			"name": "Send SMS",
+			"type": "n8n-nodes-base.twilio",
+			"typeVersion": 1,
+			"position": [
+				1220,
+				40
+			]
+		},
+		{
+			"parameters": {
+				"operation": "reportOutcome",
+				"decisionId": "={{ $('AnyBio Govern').item.json.decisionId }}",
+				"delivered": true,
+				"deliveredText": "={{ $('AnyBio Govern').item.json.text }}",
+				"outcomeFields": {
+					"deliveryRef": "={{ $json.sid }}"
+				},
+				"requestOptions": {}
+			},
+			"id": "4b0c1a2e-0016-4c8e-9a51-5d7f3e2a1016",
+			"name": "Report Delivered",
+			"type": "n8n-nodes-anybio.anyBioGovern",
+			"typeVersion": 1,
+			"position": [
+				1460,
+				40
+			]
+		},
+		{
+			"parameters": {
+				"operation": "reportOutcome",
+				"decisionId": "={{ $json.decisionId ?? '' }}",
+				"delivered": false,
+				"outcomeFields": {},
+				"requestOptions": {}
+			},
+			"id": "4b0c1a2e-0017-4c8e-9a51-5d7f3e2a1017",
+			"name": "Report Not Sent",
+			"type": "n8n-nodes-anybio.anyBioGovern",
+			"typeVersion": 1,
+			"position": [
+				1220,
+				300
+			]
+		}
+	],
+	"connections": {
+		"Reading In": {
+			"main": [
+				[
+					{
+						"node": "Record Disclosure",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Record Disclosure": {
+			"main": [
+				[
+					{
+						"node": "Draft Follow-up",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Chat Model": {
+			"ai_languageModel": [
+				[
+					{
+						"node": "Draft Follow-up",
+						"type": "ai_languageModel",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Draft Follow-up": {
+			"main": [
+				[
+					{
+						"node": "AnyBio Govern",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"AnyBio Govern": {
+			"main": [
+				[
+					{
+						"node": "Send SMS",
+						"type": "main",
+						"index": 0
+					}
+				],
+				[
+					{
+						"node": "Send SMS",
+						"type": "main",
+						"index": 0
+					}
+				],
+				[
+					{
+						"node": "Report Not Sent",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Send SMS": {
+			"main": [
+				[
+					{
+						"node": "Report Delivered",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		}
+	},
+	"pinData": {
+		"Reading In": [
+			{
+				"json": {
+					"headers": {
+						"content-type": "application/json"
+					},
+					"params": {},
+					"query": {},
+					"body": {
+						"conversationId": "synthetic-conv-001",
+						"readingId": "synthetic-reading-001",
+						"patientRef": "synthetic-patient-001",
+						"phone": "+15550100042",
+						"reading": {
+							"systolic": 162,
+							"diastolic": 98
+						}
+					}
+				}
+			}
+		]
+	},
+	"settings": {
+		"executionOrder": "v1"
+	},
+	"meta": {
+		"templateCredsSetupCompleted": false
+	},
+	"tags": []
+}

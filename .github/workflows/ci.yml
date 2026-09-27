@@ -1,0 +1,50 @@
+# Build, test and lint on every push and pull request.
+#
+# Each check runs even when an earlier one fails, so one red step does not
+# hide the state of the others.
+
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Build, test, lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        id: build
+        run: npm run build
+
+      - name: Test
+        if: success() || failure()
+        run: npm test
+
+      - name: Typecheck tests
+        if: success() || failure()
+        run: npm run typecheck
+
+      - name: Lint (n8n community node rules)
+        if: success() || failure()
+        run: npm run lint

@@ -1,0 +1,18 @@
+{
+	"node": "n8n-nodes-anybio.anyBioGovernTrigger",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Development", "Utility"],
+	"resources": {
+		"credentialDocumentation": [
+			{
+				"url": "https://github.com/anybio/n8n-nodes-anybio?tab=readme-ov-file#credentials"
+			}
+		],
+		"primaryDocumentation": [
+			{
+				"url": "https://github.com/anybio/n8n-nodes-anybio?tab=readme-ov-file#anybio-govern-trigger"
+			}
+		]
+	}
+}

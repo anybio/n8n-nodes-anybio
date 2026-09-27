@@ -1,0 +1,67 @@
+{
+	"name": "n8n-nodes-anybio",
+	"version": "0.1.0",
+	"description": "AnyBio Govern for n8n: evaluate an AI draft before it reaches a patient, branch on the decision, and write the record.",
+	"license": "MIT",
+	"homepage": "https://developer.anybio.io",
+	"keywords": [
+		"n8n-community-node-package",
+		"n8n",
+		"anybio",
+		"govern",
+		"healthcare",
+		"ai-governance"
+	],
+	"author": {
+		"name": "AnyBio Engineering",
+		"email": "platform@anybio.io",
+		"url": "https://developer.anybio.io"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/anybio/n8n-nodes-anybio.git"
+	},
+	"bugs": {
+		"url": "https://github.com/anybio/n8n-nodes-anybio/issues"
+	},
+	"engines": {
+		"node": ">=20.15"
+	},
+	"scripts": {
+		"build": "n8n-node build",
+		"build:watch": "tsc --watch",
+		"dev": "n8n-node dev",
+		"lint": "n8n-node lint",
+		"lint:fix": "n8n-node lint --fix",
+		"test": "vitest run",
+		"typecheck": "tsc --noEmit -p tsconfig.test.json",
+		"release": "n8n-node release",
+		"prepublishOnly": "n8n-node prerelease"
+	},
+	"files": [
+		"dist"
+	],
+	"n8n": {
+		"n8nNodesApiVersion": 1,
+		"strict": true,
+		"credentials": [
+			"dist/credentials/AnyBioGovernApi.credentials.js"
+		],
+		"nodes": [
+			"dist/nodes/AnyBioGovern/AnyBioGovern.node.js",
+			"dist/nodes/AnyBioGovernTrigger/AnyBioGovernTrigger.node.js"
+		]
+	},
+	"devDependencies": {
+		"@anybio/govern": "0.2.1",
+		"@n8n/node-cli": "^0.49.1",
+		"eslint": "9.32.0",
+		"prettier": "3.6.2",
+		"release-it": "^19.0.4",
+		"typescript": "5.9.2",
+		"vitest": "^3.2.4"
+	},
+	"peerDependencies": {
+		"n8n-workflow": "*"
+	}
+}
