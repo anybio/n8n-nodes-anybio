@@ -4,24 +4,26 @@
 	"nodes": [
 		{
 			"parameters": {
-				"content": "## Governed symptom follow-up on a reading\n\nA reading arrives, an LLM drafts a symptom check-in, and **AnyBio Govern** evaluates the draft under your Govern policy before anything reaches the patient.\n\n- **Deliver**: the draft was allowed; the SMS node sends it.\n- **Show Hold Text**: the draft was stopped and a holding line is owed; the SMS node sends your holding line, never the draft.\n- **Send Nothing**: the draft was stopped and nothing is owed (an opt-out, a missing consent, the cap), or AnyBio could not be reached. Nothing goes to the patient.\n\nEvery branch reports the outcome, so the record reads proposed, decided, delivered.\n\n**Synthetic data only.** Use a sandbox application key; the pinned test payload uses fictional 555-01xx numbers.",
-				"height": 520,
-				"width": 460
+				"content": "## Governed symptom follow-up on a reading\n\n**Self-hosted n8n only.** This template uses the AnyBio Govern community node (`n8n-nodes-anybio`). Community nodes are not available on n8n Cloud until they are verified.\n\n### Who's it for\nCare teams and digital health builders running remote monitoring who want an AI to draft patient check-ins, with a policy check before any message reaches a patient.\n\n### How it works\nA blood pressure reading arrives by webhook. AnyBio Govern records the AI-identity disclosure, an OpenAI model drafts a symptom check-in, and AnyBio Govern evaluates the draft under your Govern policy:\n- **Deliver**: the draft is allowed; Twilio sends it.\n- **Show Hold Text**: the draft is stopped and a holding line is owed; Twilio sends your holding line, never the draft.\n- **Send Nothing**: nothing is owed (an opt-out, missing consent, the message cap) or AnyBio could not be reached. Nothing goes to the patient.\n\nEvery branch reports the outcome, so the record reads proposed, decided, delivered.\n\n### How to set up\n1. Install the community node: **Settings > Community nodes > Install**, enter `n8n-nodes-anybio`.\n2. Create three credentials: **AnyBio Govern API** (a sandbox application key, Environment set to Sandbox) for Record Disclosure, AnyBio Govern, Report Delivered and Report Not Sent; **OpenAI** for Chat Model; **Twilio** for Send SMS.\n3. Fill in **Your settings**.\n4. Click **Execute workflow** to run the pinned sample reading, or POST the same JSON to the test URL on **Reading In**.\n\n### Requirements\n- Self-hosted n8n with community nodes enabled\n- An AnyBio Govern application key (sandbox for testing)\n- An OpenAI API key\n- A Twilio account with an SMS-capable number\n\n### How to customize the workflow\n- Edit **Your settings**: holding line, disclosure text, channel, audience, sender number, chat model.\n- Change the prompt in **Draft Follow-up**, or swap in another chat model.\n- Keep **Send Nothing** connected only to the outcome report.\n\nTest with synthetic data only: the sample uses fictional 555-01xx numbers and synthetic IDs.",
+				"height": 1200,
+				"width": 580,
+				"color": 1
 			},
 			"id": "4b0c1a2e-0001-4c8e-9a51-5d7f3e2a1001",
 			"name": "About this template",
 			"type": "n8n-nodes-base.stickyNote",
 			"typeVersion": 1,
 			"position": [
-				-460,
-				-120
+				-780,
+				-420
 			]
 		},
 		{
 			"parameters": {
-				"content": "### 1. The reading comes in\n\nPOST a JSON body shaped like the pinned test data:\n\n```json\n{\n  \"conversationId\": \"synthetic-conv-001\",\n  \"readingId\": \"synthetic-reading-001\",\n  \"patientRef\": \"synthetic-patient-001\",\n  \"phone\": \"+15550100042\",\n  \"reading\": { \"systolic\": 162, \"diastolic\": 98 }\n}\n```\n\n`readingId` becomes the AnyBio Govern node's turn ID, so a re-delivered reading replays the stored decision instead of drafting a second message.",
+				"content": "### 1. The reading comes in\n\nPOST a JSON body shaped like the pinned test data. **Your settings** holds the values you change:\n\n```json\n{\n  \"conversationId\": \"synthetic-conv-001\",\n  \"readingId\": \"synthetic-reading-001\",\n  \"patientRef\": \"synthetic-patient-001\",\n  \"phone\": \"+12025550142\",\n  \"reading\": { \"systolic\": 162, \"diastolic\": 98 }\n}\n```\n\n`readingId` becomes the AnyBio Govern node's turn ID, so a re-delivered reading replays the stored decision instead of drafting a second message.",
 				"height": 440,
-				"width": 380
+				"width": 500,
+				"color": 7
 			},
 			"id": "4b0c1a2e-0002-4c8e-9a51-5d7f3e2a1002",
 			"name": "Note: the reading",
@@ -36,14 +38,15 @@
 			"parameters": {
 				"content": "### 2. Disclosure, then the draft\n\nEvery patient-audience turn needs the AI-identity disclosure on record for the conversation, or Govern holds it. This template assumes the program's enrollment message showed the disclosure below and records it (once per conversation; a repeat returns the same evidence).\n\nSwap the chat model for your own. The prompt never gives medication instructions, and Govern enforces that anyway.",
 				"height": 300,
-				"width": 420
+				"width": 420,
+				"color": 7
 			},
 			"id": "4b0c1a2e-0003-4c8e-9a51-5d7f3e2a1003",
 			"name": "Note: disclosure and draft",
 			"type": "n8n-nodes-base.stickyNote",
 			"typeVersion": 1,
 			"position": [
-				460,
+				560,
 				-380
 			]
 		},
@@ -51,14 +54,15 @@
 			"parameters": {
 				"content": "### 3. Only Deliver and Show Hold Text reach the SMS node\n\nSMS is outbound, so a hold shows text only when AnyBio says a holding line is owed, and at most once per decision. **Send Nothing** is connected only to the outcome report: never connect anything that messages the patient to it.\n\nThe Hold Message on AnyBio Govern is your holding line: fixed text your clinical owner wrote in advance, never model-written.",
 				"height": 300,
-				"width": 440
+				"width": 440,
+				"color": 7
 			},
 			"id": "4b0c1a2e-0004-4c8e-9a51-5d7f3e2a1004",
 			"name": "Note: branches",
 			"type": "n8n-nodes-base.stickyNote",
 			"typeVersion": 1,
 			"position": [
-				1160,
+				1400,
 				-380
 			]
 		},
@@ -81,10 +85,64 @@
 		},
 		{
 			"parameters": {
+				"assignments": {
+					"assignments": [
+						{
+							"id": "4b0c1a2e-0101-4c8e-9a51-5d7f3e2a1101",
+							"name": "holdMessage",
+							"value": "Thanks for your reading. A nurse from your care team will reply within one business day. If you have chest pain or trouble breathing, call 911 now.",
+							"type": "string"
+						},
+						{
+							"id": "4b0c1a2e-0102-4c8e-9a51-5d7f3e2a1102",
+							"name": "disclosureText",
+							"value": "Your Care Program: messages in this conversation are written by an automated assistant. Your care team reviews anything it is unsure about. Reply STOP to opt out.",
+							"type": "string"
+						},
+						{
+							"id": "4b0c1a2e-0103-4c8e-9a51-5d7f3e2a1103",
+							"name": "channel",
+							"value": "sms",
+							"type": "string"
+						},
+						{
+							"id": "4b0c1a2e-0104-4c8e-9a51-5d7f3e2a1104",
+							"name": "audience",
+							"value": "patient",
+							"type": "string"
+						},
+						{
+							"id": "4b0c1a2e-0105-4c8e-9a51-5d7f3e2a1105",
+							"name": "smsFrom",
+							"value": "+12025550101",
+							"type": "string"
+						},
+						{
+							"id": "4b0c1a2e-0106-4c8e-9a51-5d7f3e2a1106",
+							"name": "chatModel",
+							"value": "gpt-4o-mini",
+							"type": "string"
+						}
+					]
+				},
+				"includeOtherFields": true,
+				"options": {}
+			},
+			"id": "4b0c1a2e-0018-4c8e-9a51-5d7f3e2a1018",
+			"name": "Your settings",
+			"type": "n8n-nodes-base.set",
+			"typeVersion": 3.4,
+			"position": [
+				340,
+				120
+			]
+		},
+		{
+			"parameters": {
 				"operation": "recordDisclosure",
-				"conversationId": "={{ $json.body.conversationId }}",
-				"channel": "sms",
-				"textShown": "Synthetic Heart Program: messages in this conversation are written by an automated assistant. Your care team reviews anything it is unsure about. Reply STOP to opt out.",
+				"conversationId": "={{ $('Reading In').item.json.body.conversationId }}",
+				"channel": "={{ $('Your settings').item.json.channel }}",
+				"textShown": "={{ $('Your settings').item.json.disclosureText }}",
 				"disclosureFields": {},
 				"requestOptions": {}
 			},
@@ -93,7 +151,7 @@
 			"type": "n8n-nodes-anybio.anyBioGovern",
 			"typeVersion": 1,
 			"position": [
-				340,
+				580,
 				120
 			]
 		},
@@ -107,13 +165,13 @@
 			"type": "@n8n/n8n-nodes-langchain.chainLlm",
 			"typeVersion": 1.5,
 			"position": [
-				580,
+				820,
 				120
 			]
 		},
 		{
 			"parameters": {
-				"model": "gpt-4o-mini",
+				"model": "={{ $('Your settings').item.json.chatModel }}",
 				"options": {}
 			},
 			"id": "4b0c1a2e-0013-4c8e-9a51-5d7f3e2a1013",
@@ -121,7 +179,7 @@
 			"type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
 			"typeVersion": 1,
 			"position": [
-				600,
+				840,
 				340
 			]
 		},
@@ -130,13 +188,13 @@
 				"operation": "evaluate",
 				"draftText": "={{ $json.text }}",
 				"conversationId": "={{ $('Reading In').item.json.body.conversationId }}",
-				"channel": "sms",
-				"audience": "patient",
+				"channel": "={{ $('Your settings').item.json.channel }}",
+				"audience": "={{ $('Your settings').item.json.audience }}",
 				"patientRef": "={{ $('Reading In').item.json.body.patientRef }}",
-				"holdMessage": "Thanks for your reading. A nurse from the Synthetic Heart Program will text you back within 2 hours. If you have chest pain or trouble breathing, call 911 now.",
+				"holdMessage": "={{ $('Your settings').item.json.holdMessage }}",
 				"additionalFields": {
 					"turnId": "={{ $('Reading In').item.json.body.readingId }}",
-					"model": "gpt-4o-mini"
+					"model": "={{ $('Your settings').item.json.chatModel }}"
 				},
 				"requestOptions": {}
 			},
@@ -145,13 +203,13 @@
 			"type": "n8n-nodes-anybio.anyBioGovern",
 			"typeVersion": 1,
 			"position": [
-				900,
+				1140,
 				120
 			]
 		},
 		{
 			"parameters": {
-				"from": "+15550100001",
+				"from": "={{ $('Your settings').item.json.smsFrom }}",
 				"to": "={{ $('Reading In').item.json.body.phone }}",
 				"message": "={{ $json.text }}",
 				"options": {}
@@ -161,7 +219,7 @@
 			"type": "n8n-nodes-base.twilio",
 			"typeVersion": 1,
 			"position": [
-				1220,
+				1460,
 				40
 			]
 		},
@@ -181,7 +239,7 @@
 			"type": "n8n-nodes-anybio.anyBioGovern",
 			"typeVersion": 1,
 			"position": [
-				1460,
+				1700,
 				40
 			]
 		},
@@ -198,13 +256,24 @@
 			"type": "n8n-nodes-anybio.anyBioGovern",
 			"typeVersion": 1,
 			"position": [
-				1220,
+				1460,
 				300
 			]
 		}
 	],
 	"connections": {
 		"Reading In": {
+			"main": [
+				[
+					{
+						"node": "Your settings",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Your settings": {
 			"main": [
 				[
 					{
@@ -298,7 +367,7 @@
 						"conversationId": "synthetic-conv-001",
 						"readingId": "synthetic-reading-001",
 						"patientRef": "synthetic-patient-001",
-						"phone": "+15550100042",
+						"phone": "+12025550142",
 						"reading": {
 							"systolic": 162,
 							"diastolic": 98
