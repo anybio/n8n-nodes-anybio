@@ -18,7 +18,7 @@ The nodes follow the Govern contract (`/api/v1/govern`) and behave as the refere
 - [Template: governed symptom follow-up on a reading](#template-governed-symptom-follow-up-on-a-reading)
 - [The synthetic sandbox](#the-synthetic-sandbox)
 - [Development](#development)
-- [Publishing](#publishing)
+- [Releases](#releases)
 
 ## Install on self-hosted n8n
 
@@ -190,7 +190,7 @@ Source layout: `credentials/` (the credential), `nodes/AnyBioGovern`, `nodes/Any
 
 ## Releases
 
-Releases are published to npm from GitHub Actions with a provenance statement, from version tags only.
+Releases are published to npm from GitHub Actions with a provenance statement, from version tags only. To release, set the version in `package.json`, push a matching `v*.*.*` tag, and approve the run in the `npm-publish` environment. The workflow checks that the tag matches the version, then lints, builds, tests and publishes.
 
 ## License
 
