@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-anybio",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "AnyBio Govern for n8n: evaluate an AI draft before it reaches a patient, branch on the decision, and write the record.",
 	"license": "MIT",
 	"homepage": "https://developer.anybio.io",

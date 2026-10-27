@@ -8,7 +8,7 @@ The **AnyBio Govern** node evaluates a draft under your Govern policy and routes
 
 The nodes follow the Govern contract (`/api/v1/govern`) and behave as the reference client `@anybio/govern` 0.2.1 does on the channel rule, the holding line and an unreachable API; the test suite runs the same cases against that package.
 
-- [Install on self-hosted n8n](#install-on-self-hosted-n8n)
+- [Install](#install)
 - [Credentials](#credentials)
 - [AnyBio Govern](#anybio-govern)
 - [The channel rule](#the-channel-rule)
@@ -20,11 +20,13 @@ The nodes follow the Govern contract (`/api/v1/govern`) and behave as the refere
 - [Development](#development)
 - [Releases](#releases)
 
-## Install on self-hosted n8n
+## Install
 
-The package has no runtime dependencies. It needs a self-hosted n8n with community packages enabled; it was tested on n8n 2.40.7.
+The package is a verified community node, so it installs from the canvas on n8n Cloud and on self-hosted n8n. It has no runtime dependencies; it was tested on n8n 2.44.6.
 
-**From the editor.** Settings, Community Nodes, Install, then enter `n8n-nodes-anybio`.
+**From the canvas** (n8n Cloud, and self-hosted with verified community nodes on). Open the nodes panel, search for `AnyBio Govern`, select it under **More from the community**, then **Install**. The owner or an admin installs it once; every member of the instance can then use it. On n8n Cloud, if the node does not appear in the panel, turn on **Verified community nodes** in the instance settings of the admin panel; a restart of the instance may be needed. On self-hosted, verified nodes show in the panel unless `N8N_VERIFIED_PACKAGES_ENABLED` is set to `false`.
+
+**From Settings** (self-hosted). Settings, Community Nodes, Install, then enter `n8n-nodes-anybio`.
 
 **By hand** (queue mode, or an instance without the editor install):
 
@@ -36,11 +38,11 @@ npm install n8n-nodes-anybio --omit=dev --omit=peer
 
 In the official Docker image `~/.n8n` is `/home/node/.n8n`. `--omit=peer` matters: `n8n-workflow` is provided by n8n itself, and installing it again pulls native build steps the image does not have.
 
-**From a local build** (before the first npm release):
+**From a local build** (development):
 
 ```sh
 npm ci && npm run build && npm pack
-cd ~/.n8n/nodes && npm install /path/to/n8n-nodes-anybio-0.1.0.tgz --omit=dev --omit=peer
+cd ~/.n8n/nodes && npm install /path/to/n8n-nodes-anybio-0.1.1.tgz --omit=dev --omit=peer
 ```
 
 ## Credentials
@@ -104,7 +106,7 @@ Every item carries: `output`, `text`, `decisionId`, `decision`, `mode`, `status`
 
 Errors from any operation carry the HTTP status and the API's reason code, never message text. With **Continue On Fail**, an Evaluate item that failed goes to Send Nothing, never Deliver.
 
-The node can also be attached to an AI Agent as a tool. As a tool it tells the agent the decision; it does not stand between the agent's reply and the patient. To gate what is sent, put AnyBio Govern inline, between the step that drafts and the step that sends.
+The node can also be attached to an AI Agent as a tool. n8n hands a tool one output, so as a tool the node puts every Evaluate result on it, whatever the gate decided: the agent receives `output` (`deliver`, `showHoldText` or `sendNothing`), `text`, `decision`, `decisionId` and the reasons. Tell the agent to reply with `text` when `output` is not `deliver`, and to send nothing when `text` is empty. As a tool the node tells the agent the decision; it does not stand between the agent's reply and the patient. To gate what is sent, put AnyBio Govern inline, between the step that drafts and the step that sends.
 
 ## The channel rule
 
