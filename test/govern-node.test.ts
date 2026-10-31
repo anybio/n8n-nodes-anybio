@@ -45,6 +45,8 @@ function context(options: {
 	credentialId?: string | null;
 	/** Leave `addExecutionHints` off the context, as on an n8n version without execution hints. */
 	noHints?: boolean;
+	/** The node's type; n8n's generated tool variant ends in `Tool`. */
+	nodeType?: string;
 }) {
 	const calls: HttpCall[] = [];
 	const hints: NodeExecutionHint[] = [];
@@ -72,7 +74,7 @@ function context(options: {
 		getNode: () => ({
 			id: 'node-1',
 			name: 'AnyBio Govern',
-			type: 'n8n-nodes-anybio.anyBioGovern',
+			type: options.nodeType ?? 'n8n-nodes-anybio.anyBioGovern',
 			typeVersion: 1,
 			position: [0, 0],
 			parameters: {},
@@ -505,6 +507,78 @@ describe('AnyBio Govern: Evaluate', () => {
 		expect(deliver!.map((item) => item.pairedItem)).toEqual([{ item: 0 }, { item: 2 }]);
 		expect(hold!.map((item) => item.pairedItem)).toEqual([{ item: 1 }]);
 		expect(nothing).toHaveLength(0);
+	});
+
+	describe('as an AI Agent tool (n8n hands the model the first output only)', () => {
+		const TOOL_TYPE = 'n8n-nodes-anybio.anyBioGovernTool';
+
+		it('every result lands on the first output, a held draft as the hold text', async () => {
+			const { ctx } = context({
+				nodeType: TOOL_TYPE,
+				items: 3,
+				params: (i) => evaluateParams({ channel: 'web_chat', draftText: `${DRAFT} ${i}` }),
+				answer: (call) => {
+					const i = Number(String(call.body!.content).slice(-1));
+					return {
+						statusCode: 200,
+						body: decisionView({
+							decision: i === 1 ? 'hold' : 'allow',
+							decision_id: `00000000-0000-4000-8000-00000000000${i}`,
+							send_holding_line: i === 1,
+							reasons: i === 1 ? ['prohibited_claim'] : [],
+						}),
+					};
+				},
+			});
+			const [first, hold, nothing] = await run(ctx);
+			expect(first!.map((item) => item.json.output)).toEqual([
+				'deliver',
+				'showHoldText',
+				'deliver',
+			]);
+			expect(first!.map((item) => item.pairedItem)).toEqual([
+				{ item: 0 },
+				{ item: 1 },
+				{ item: 2 },
+			]);
+			expect(first![1]!.json).toMatchObject({
+				text: HOLD,
+				decision: 'hold',
+				decisionId: '00000000-0000-4000-8000-000000000001',
+				reasons: ['prohibited_claim'],
+			});
+			expect(hold).toHaveLength(0);
+			expect(nothing).toHaveLength(0);
+		});
+
+		it('the ordinary node type keeps the three-output routing for the same decisions', async () => {
+			const { ctx } = context({
+				params: evaluateParams({ channel: 'web_chat' }),
+				answer: () => ({
+					statusCode: 200,
+					body: decisionView({ decision: 'hold', send_holding_line: true }),
+				}),
+			});
+			const [deliver, hold] = await run(ctx);
+			expect(deliver).toHaveLength(0);
+			expect(hold).toHaveLength(1);
+		});
+
+		it('with continueOnFail a failed item also lands on the first output, as sendNothing', async () => {
+			const { ctx, calls } = context({
+				nodeType: TOOL_TYPE,
+				params: evaluateParams({ additionalFields: { turnId: 'govern:reserved' } }),
+				answer: () => ({ statusCode: 200, body: decisionView() }),
+				continueOnFail: true,
+			});
+			const [first, hold, nothing] = await run(ctx);
+			expect(calls).toHaveLength(0);
+			expect(first).toHaveLength(1);
+			expect(first![0]!.json).toMatchObject({ output: 'sendNothing', text: '' });
+			expect(String(first![0]!.json.error)).not.toContain('cures');
+			expect(hold).toHaveLength(0);
+			expect(nothing).toHaveLength(0);
+		});
 	});
 
 	it('a configuration error throws without the draft, and with continueOnFail lands on Send Nothing', async () => {

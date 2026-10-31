@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1
+
+- As an AI Agent tool, every Evaluate result now reaches the agent. n8n hands a tool the node's first output only, so a held or blocked draft used to arrive as an empty response and an agent with ordinary instructions answered with its own draft. In tool mode the decision item (`output`, `text`, `decision`, `decisionId`, the reasons) is emitted on the first output whatever the gate decided. The three-output routing of the ordinary node is unchanged.
+- The package no longer ships `dist/tsconfig.tsbuildinfo`.
+- README: the install section covers the verified path on n8n Cloud and self-hosted n8n; the tool section says what the agent receives and how to instruct it.
+
 ## 0.1.0
 
 - AnyBio Govern node: Evaluate (three outputs: Deliver, Show Hold Text, Send Nothing), Report Outcome (SHA-256 hashed locally), Record Disclosure, Get Decision.

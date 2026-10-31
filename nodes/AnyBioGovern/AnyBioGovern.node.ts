@@ -38,7 +38,7 @@ export const HOLDING_LINE_STATIC_KEY = 'holdingLineDecisionIds';
 /** Where the mode memory (last seen mode per application and channel) lives in the node's static data. */
 export const MODE_STATIC_KEY = 'governModes';
 
-const CLIENT_HEADER = 'n8n-nodes-anybio/0.1.0';
+const CLIENT_HEADER = 'n8n-nodes-anybio/0.1.1';
 
 const channelOptions = [
 	{
@@ -143,6 +143,18 @@ export function addHint(ctx: IExecuteFunctions, hint: NodeExecutionHint | null):
 	if (hint === null) return;
 	const add = (ctx as Partial<Pick<IExecuteFunctions, 'addExecutionHints'>>).addExecutionHints;
 	if (typeof add === 'function') add.call(ctx, hint);
+}
+
+/**
+ * True when the node runs as an AI Agent tool. n8n generates the tool variant
+ * of a node by appending `Tool` to its type (`n8n-nodes-anybio.anyBioGovernTool`)
+ * and hands the model the node's first output only. In tool mode every
+ * Evaluate result therefore goes on the first output, so a held or blocked
+ * draft reaches the agent as a decision and not as an empty response.
+ */
+export function isToolInvocation(ctx: IExecuteFunctions): boolean {
+	const type = ctx.getNode().type;
+	return typeof type === 'string' && type.endsWith('Tool');
 }
 
 function decisionJson(decision: Decision, environment: string): IDataObject {
@@ -471,6 +483,7 @@ export class AnyBioGovern implements INodeType {
 		const applicationId = applicationIdFrom(credentials.applicationId);
 		const memory = holdingLineMemory(this);
 		const modes = modeMemory(this, modeMemoryApplication(this, applicationId));
+		const asTool = isToolInvocation(this);
 
 		const gateOutputs: INodeExecutionData[][] = [[], [], []];
 		const single: INodeExecutionData[] = [];
@@ -537,7 +550,7 @@ export class AnyBioGovern implements INodeType {
 					if (result.decisionId === null && result.reasons.includes(REASONS.clientMisconfigured)) {
 						refused.push(result);
 					}
-					gateOutputs[GATE_OUTPUT_INDEX[result.output]].push({
+					gateOutputs[asTool ? 0 : GATE_OUTPUT_INDEX[result.output]].push({
 						json: { ...result, environment } as unknown as IDataObject,
 						pairedItem: { item: i },
 					});
@@ -615,8 +628,13 @@ export class AnyBioGovern implements INodeType {
 						pairedItem: { item: i },
 					};
 					// Never the deliver output: an item that failed carries no decision.
-					if (operation === 'evaluate') gateOutputs[GATE_OUTPUT_INDEX.sendNothing].push(failed);
-					else single.push(failed);
+					// As a tool the first output is the only one the agent sees, and
+					// the item says sendNothing.
+					if (operation === 'evaluate') {
+						gateOutputs[asTool ? 0 : GATE_OUTPUT_INDEX.sendNothing].push(failed);
+					} else {
+						single.push(failed);
+					}
 					continue;
 				}
 				if (error instanceof GovernApiError) {
